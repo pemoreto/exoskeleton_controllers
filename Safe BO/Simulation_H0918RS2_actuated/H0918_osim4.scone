@@ -1,0 +1,10 @@
+# Model used in simulation
+ModelOpenSim3 {
+	model_file = "H0918v3.osim"
+	state_init_file = "InitStateH0918Gait10ActA.zml"
+	initial_state_offset = "0~0.01<-0.5,0.5>"
+	initial_state_offset_exclude = *_tx;*_ty;*_u
+	initial_load = 1
+	fixed_control_step_size = 0.005
+	scone_version = 2.3.0.2844
+}

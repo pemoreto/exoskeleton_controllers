@@ -1,0 +1,17 @@
+ModelOpenSim3 {
+	model_file = "H0918v3_actuated_exo.osim"
+	state_init_file = "InitStateH0918Gait10ActA.zml"
+	initial_state_offset = 0
+	initial_load = 1
+	fixed_control_step_size = 0.005
+
+		CompositeController {
+		<< H0918RS2v3_opt_det_param_osim.scone >>
+	}
+
+
+		CompositeMeasure {
+		<< EffortWangCubed2000.scone >>
+	}
+}
+
