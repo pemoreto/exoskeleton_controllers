@@ -31,7 +31,7 @@ class SimpleGaitCycleEstimator:
         delayed_time = time - self.delay
 
         # Detect liftoff when GRF crosses a threshold from below
-        if len(grf) >= 2 and grf[-1] > 1e-1 and grf[-2] < 1e-1:
+        if len(grf) >= 2 and grf[-1] > 1e1 and grf[-2] < 1e1:
             self.gait_cycle_durations.append(time - self.last_liftoff_time)
             self.last_liftoff_time = time
 

@@ -53,10 +53,10 @@ def obj_con_function(params, iter, save_plots):
 
     time_cycle = config.time_cycle
     time = config.time
-    cp_idx_r = config.cp_idx_r
-    cp_ang_r = config.cp_ang_r
-    cp_idx_l = config.cp_idx_l
-    cp_ang_l = config.cp_ang_l
+    cp_idx_r = config.cp_knee_idx_r
+    cp_ang_r = config.cp_knee_ang_r
+    cp_idx_l = config.cp_knee_idx_l
+    cp_ang_l = config.cp_knee_ang_l
 
     # Extract and apply vertical shifts
     v_shift_max_1, v_shift_min_1, v_shift_max_2, v_shift_min_2 = params[3:]

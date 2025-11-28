@@ -8,6 +8,7 @@ from run_simulation import run_simulation
 import config
 from sconetools import sconepy
 import time
+from scipy.interpolate import CubicHermiteSpline
 
 '''
 Main script for SafeBO.
@@ -34,51 +35,99 @@ simu_name = os.path.splitext(os.path.basename(__file__))[0]
 # Load the gait cycle data from an Excel file
 data = config.data
 time_cycle = config.time_cycle
+hip_r_ref = config.hip_r_ref
+hip_l_ref = config.hip_l_ref
 knee_r_ref = config.knee_r_ref
 knee_l_ref = config.knee_l_ref
+ankle_r_ref = config.ankle_r_ref
+ankle_l_ref = config.ankle_l_ref
 
 # Define simulation time range
 time_range = config.time
 
 # Generate the spline interpolation for the entire time array
-spline_ref_r, spline_ref_l = create_splines(config.cp_idx_r, config.cp_ang_r, config.cp_idx_l, config.cp_ang_l)
+spline_ref_hip_r, spline_ref_hip_l = create_splines(config.cp_hip_idx_r, config.cp_hip_ang_r, config.cp_hip_idx_l, config.cp_hip_ang_l)
+spline_ref_knee_r, spline_ref_knee_l = create_splines(config.cp_knee_idx_r, config.cp_knee_ang_r, config.cp_knee_idx_l, config.cp_knee_ang_l)
+spline_ref_ankle_r, spline_ref_ankle_l = create_splines(config.cp_ankle_idx_r, config.cp_ankle_ang_r, config.cp_ankle_idx_l, config.cp_ankle_ang_l)
 
 # Categorize extrema
-min_1_r = config.min_idx_r[0]
-max_1_r = config.max_idx_r[0]
-min_2_r = config.min_idx_r[1]
-max_2_r = config.max_idx_r[1]
-min_2_l = config.min_idx_l[0]
-max_2_l = config.max_idx_l[0]
-min_1_l = config.min_idx_l[1]
-max_1_l = config.max_idx_l[1]
 
 # Plot categorized extrema points for right and left knee angles
 fig, axs = plt.subplots(2, 1, figsize=(12, 12))
+# Right Hip Plot
+axs[0].plot(time_cycle, spline_ref_hip_r, label='Spline')
+axs[0].plot(time_cycle, hip_r_ref, label='Real Curve')
+for i in range(len(config.max_hip_idx_r)):
+    axs[0].scatter(time_cycle[config.max_hip_idx_r[i]], spline_ref_hip_r[config.max_hip_idx_r[i]], label=f'Max {i}', zorder=5)
+for i in range(len(config.min_hip_idx_r)):
+    axs[0].scatter(time_cycle[config.min_hip_idx_r[i]], spline_ref_hip_r[config.min_hip_idx_r[i]], label=f'Min {i}', zorder=5)
+axs[0].set_title('Right Hip Angle with Categorized Extrema')
+axs[0].grid(True)
+axs[0].legend(loc="upper right")
 
+# Left Hip Plot
+axs[1].plot(time_cycle, spline_ref_hip_l, label='Spline')
+axs[1].plot(time_cycle, hip_l_ref, label='Real Curve')
+for i in range(len(config.max_hip_idx_l)):
+    axs[1].scatter(time_cycle[config.max_hip_idx_l[i]], spline_ref_hip_l[config.max_hip_idx_l[i]], label=f'Max {i}', zorder=5)
+for i in range(len(config.min_hip_idx_l)):
+    axs[1].scatter(time_cycle[config.min_hip_idx_l[i]], spline_ref_hip_l[config.min_hip_idx_l[i]], label=f'Min {i}', zorder=5)
+axs[1].set_title('Left Hip Angle with Categorized Extrema')
+axs[1].grid(True)
+axs[1].legend(loc="upper right")
+
+fig, axs = plt.subplots(2, 1, figsize=(12, 12))
 # Right Knee Plot
-axs[0].plot(time_cycle, spline_ref_r, label='Real Curve')
-axs[0].scatter(time_cycle[max_1_r], spline_ref_r[max_1_r], color='r', label='Max 1', zorder=5)
-axs[0].scatter(time_cycle[min_1_r], spline_ref_r[min_1_r], color='b', label='Min 1', zorder=5)
-axs[0].scatter(time_cycle[max_2_r], spline_ref_r[max_2_r], color='g', label='Max 2', zorder=5)
-axs[0].scatter(time_cycle[min_2_r], spline_ref_r[min_2_r], color='m', label='Min 2', zorder=5)
+axs[0].plot(time_cycle, spline_ref_knee_r, label='Spline')
+axs[0].plot(time_cycle, knee_r_ref, label='Real Curve')
+for i in range(len(config.max_knee_idx_r)):
+    axs[0].scatter(time_cycle[config.max_knee_idx_r[i]], spline_ref_knee_r[config.max_knee_idx_r[i]], label=f'Max {i}', zorder=5)
+for i in range(len(config.min_knee_idx_r)):
+    axs[0].scatter(time_cycle[config.min_knee_idx_r[i]], spline_ref_knee_r[config.min_knee_idx_r[i]], label=f'Min {i}', zorder=5)
 axs[0].set_title('Right Knee Angle with Categorized Extrema')
 axs[0].grid(True)
-axs[0].legend()
+axs[0].legend(loc="upper right")
 
 # Left Knee Plot
-axs[1].plot(time_cycle, spline_ref_l, label='Real Curve')
-axs[1].scatter(time_cycle[max_1_l], spline_ref_l[max_1_l], color='r', label='Max 1', zorder=5)
-axs[1].scatter(time_cycle[min_1_l], spline_ref_l[min_1_l], color='b', label='Min 1', zorder=5)
-axs[1].scatter(time_cycle[max_2_l], spline_ref_l[max_2_l], color='g', label='Max 2', zorder=5)
-axs[1].scatter(time_cycle[min_2_l], spline_ref_l[min_2_l], color='m', label='Min 2', zorder=5)
+axs[1].plot(time_cycle, spline_ref_knee_l, label='Spline')
+axs[1].plot(time_cycle, knee_l_ref, label='Real Curve')
+for i in range(len(config.max_knee_idx_l)):
+    axs[1].scatter(time_cycle[config.max_knee_idx_l[i]], spline_ref_knee_l[config.max_knee_idx_l[i]], label=f'Max {i}', zorder=5)
+for i in range(len(config.min_knee_idx_l)):
+    axs[1].scatter(time_cycle[config.min_knee_idx_l[i]], spline_ref_knee_l[config.min_knee_idx_l[i]], label=f'Min {i}', zorder=5)
 axs[1].set_title('Left Knee Angle with Categorized Extrema')
 axs[1].grid(True)
-axs[1].legend()
+axs[1].legend(loc="upper right")
+
+fig, axs = plt.subplots(2, 1, figsize=(12, 12))
+
+# Right Ankle Plot
+axs[0].plot(time_cycle, spline_ref_ankle_r, label='Spline')
+axs[0].plot(time_cycle, ankle_r_ref, label='Real Curve')
+for i in range(len(config.max_ankle_idx_r)):
+    axs[0].scatter(time_cycle[config.max_ankle_idx_r[i]], spline_ref_ankle_r[config.max_ankle_idx_r[i]], label=f'Max {i}', zorder=5)
+for i in range(len(config.min_ankle_idx_r)):
+    axs[0].scatter(time_cycle[config.min_ankle_idx_r[i]], spline_ref_ankle_r[config.min_ankle_idx_r[i]], label=f'Min {i}', zorder=5)
+axs[0].set_title('Right Ankle Angle with Categorized Extrema')
+axs[0].grid(True)
+axs[0].legend(loc="upper right")
+
+# Left Ankle Plot
+axs[1].plot(time_cycle, spline_ref_ankle_l, label='Spline')
+axs[1].plot(time_cycle, ankle_l_ref, label='Real Curve')
+for i in range(len(config.max_ankle_idx_l)):
+    axs[1].scatter(time_cycle[config.max_ankle_idx_l[i]], spline_ref_ankle_l[config.max_ankle_idx_l[i]], label=f'Max {i}', zorder=5)
+for i in range(len(config.min_ankle_idx_l)):
+    axs[1].scatter(time_cycle[config.min_ankle_idx_l[i]], spline_ref_ankle_l[config.min_ankle_idx_l[i]], label=f'Min {i}', zorder=5)
+axs[1].set_title('Left Ankle Angle with Categorized Extrema')
+axs[1].grid(True)
+axs[1].legend(loc="upper right")
 
 plt.tight_layout()
-plt.close()
-#plt.show()
+plt.show()
+#plt.close()
+#plt.close()
+#plt.close()
 
 # SCONE Simulation Initialization
 sconepy.set_log_level(3)
@@ -86,7 +135,7 @@ print('SCONE Version', sconepy.version())
 sconepy.set_array_dtype_float32()
 
 # Load SCONE simulation model
-model = sconepy.load_model('Simulation_H0918RS2_actuated/Simulation_H0918RS2_actuated.scone')
+model = sconepy.load_model('Simulation_H0918RS2_actuated/Simulation_H0918RS2_actuated.scone', '0774_0.895_0.880.par')
 
 # Define search space bounds for Bayesian Optimization
 bounds = torch.tensor([[0.1, 0, 0, 0, -2, 0, -2],  # Lower bounds
@@ -104,7 +153,6 @@ init_points = [
 other good points:
     [0,	0,	0, 1.04398478, -0.555836298, 1.599756304,	-1.241550102],
     [0.123221057, 0.177307192, 0.034104545, 1.706721544, -0.348581314, 1.769079804, -0.172509313]
-'''
 
 # Start Bayesian Optimization (BO) for PID tuning
 print('\n------------ Starting Bayesian Optimization ------------')
@@ -112,11 +160,17 @@ start_time_BO = time.time()
 best_pid_param, best_shifts, version = safeBO_unified(init_points, 30, bounds, 1, 0.1, True)
 end_time_BO = time.time()
 print(f'\nBO ended. Time taken: {end_time_BO - start_time_BO:.2f} seconds')
+'''
+pid_param_hip = [0, 0, 0]
+pid_param_knee = [1.69953865, 0.07541722, 0.03242994]
+pid_param_ankle = [0, 0, 0]
+shifts = [0.7666024,  -0.16908622,  0.82656652, -1.35391402]
+version = 'v_677.1206'
 
 # Run the SCONE simulation with optimized PID parameters
 print('\n ------------ Starting Simulation ------------')
 start_time_sim = time.time()
-run_simulation(model, best_pid_param, best_shifts, True, time_range, version)
+run_simulation(model, pid_param_hip, pid_param_knee, pid_param_ankle, shifts, True, time_range, version)
 end_time_sim = time.time()
 print(f'\nSimulation ended. Time taken: {end_time_sim - start_time_sim:.2f} seconds')
 

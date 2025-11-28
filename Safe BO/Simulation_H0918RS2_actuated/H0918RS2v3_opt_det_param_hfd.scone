@@ -1,0 +1,212 @@
+# Two-state Gait controller
+
+$hip_delay = 0.01
+$ham_delay = 0.015
+$knee_delay = 0.02
+$ankle_delay = 0.035
+$ves_delay = 0.05
+
+GaitStateController {
+	signature_postfix = "RS2"
+	auto_std_factor = 0.02
+	stance_load_threshold = 0.33076433
+	#swing_load_threshold = 0.05
+	leg_load_sensor_delay = 0
+	symmetric = 1
+	ConditionalControllers {
+		#(11111)
+		ConditionalController {
+			states = "EarlyStance LateStance Liftoff Swing Landing"
+			ReflexController {
+				MuscleReflex { 
+					target = tib_ant	
+					KL = 0.68383221
+					L0 = 0.56607653
+					KF = 0.44753208
+					delay = $ankle_delay 
+				}
+				MuscleReflex { 
+					target = soleus	
+					KL = 0.58277758
+					L0 = 0.85793015
+					KF = 0.94723466
+					delay = $ankle_delay 
+				}
+				MuscleReflex { 
+					target = gastroc
+					KL = 0.45448984
+					L0 = 0.66118543
+					KF = 0.74804493
+					delay = $ankle_delay 
+				}
+				MuscleReflex { 
+					target = tib_ant
+					source = soleus 
+					KL = -0.12953086
+					KF = -1.0467276
+					delay = $ankle_delay 
+				}
+				MuscleReflex { 
+					target = tib_ant
+					source = gastroc 
+					KL = -0.0076008268
+					KF = -0.70982687
+					delay = $ankle_delay 
+				}
+				MuscleReflex {
+					target = soleus	
+					source = tib_ant 
+					KF = -0.65786469
+					delay = $ankle_delay 
+				}
+				MuscleReflex { 
+					target = gastroc
+					source = tib_ant 
+					KF = -0.77453981
+					delay = $ankle_delay 
+				}
+			}
+		}
+		
+		# Stance reflexes (00011)
+		ConditionalController {
+			states = "EarlyStance LateStance"
+			ReflexController {
+				MuscleReflex {
+					target = vasti
+					delay = $knee_delay
+					KF = 0.79507444
+					KL = 1.8852903
+					L0 = 0.61903264
+				}
+				MuscleReflex {
+					target = iliopsoas
+					delay = $hip_delay
+					KL = 1.8814748
+					L0 = 0.88840824
+				}
+				MuscleReflex {
+					target = rect_fem
+					delay = $ham_delay
+					KL = 0.21552574
+					L0 = 0.48009586
+				}
+				MuscleReflex {
+					target = hamstrings
+					delay = $ham_delay
+					KL = 0.88851111
+					L0 = 0.77993999
+				}
+				MuscleReflex {
+					target = bifemsh
+					delay = $knee_delay
+					#KL = 1.6
+					#L0 = 1.9
+					KF = 0.21749873
+				}
+				MuscleReflex {
+					target = glut_max
+					delay = $hip_delay
+					KL = 0.48657049
+					L0 = 1.0897248
+				}
+				
+				# Root stability
+				DofReflex {
+					target = hamstrings
+					source = pelvis_tilt
+					delay = $ves_delay 
+					KP = 1.325633
+					KV = 0.21717916
+					P0 = -0.105 # theta_ref, not optimized
+				}
+				DofReflex {
+					target = glut_max
+					source = pelvis_tilt
+					delay = $ves_delay 
+					KP = 1.0315159
+					#KV = 0.183885
+					P0 = -0.105 # theta_ref, not optimized
+				}
+				#DofReflex {
+				#	target = iliopsoas
+				#	source = pelvis_tilt
+				#	delay = $ves_delay 
+				#	KP = -0.09
+				#	#KV = -0.05
+				#	P0 = -0.105 # theta_ref, not optimized
+				#}
+				DofReflex {
+					target = rect_fem
+					source = pelvis_tilt
+					delay = $ves_delay 
+					KP = -1.1223087
+					KV = -0.046839481
+					P0 = -0.105 # theta_ref, not optimized
+				}
+			}
+		}
+		
+		
+		# Swing reflexes (11100)
+		ConditionalController {
+			states = "Liftoff Swing Landing"
+			ReflexController {
+				# hip flexors
+				MuscleReflex {
+					target = iliopsoas
+					delay = $hip_delay
+					KL = 0.98926088
+					L0 = 0.71833775
+				}
+				MuscleReflex {
+					target = rect_fem
+					delay = $ham_delay
+					KL = 0.51229205
+					L0 = 1.2077922
+				}
+				
+				# balance
+				DofReflex {
+					target = iliopsoas
+					source = pelvis_tilt
+					delay = $ves_delay 
+					KP = 1.6294282
+					KV = 0.24353876
+					P0 = -0.105 # theta_ref, not optimized
+				}
+				
+				# antagonists
+				MuscleReflex {
+					target = iliopsoas
+					source = hamstrings
+					delay = $ham_delay
+					KL = -2.7718539
+					L0 = 0.68779584
+				}
+				
+				# posterior muscles
+				MuscleReflex {
+					target = hamstrings
+					delay = $ham_delay
+					KL = 0.19542087
+					L0 = 1.0770729
+				}
+				MuscleReflex {
+					target = bifemsh
+					delay = $knee_delay
+					#KL = 0.66
+					#L0 = 1.6
+					KF = 0.21963672
+				}
+				MuscleReflex {
+					target = glut_max
+					delay = $hip_delay
+					KL = 0.95749132
+					L0 = 0.86354122
+					#KF = 0.4 # 0.4 in paper
+				}
+			}
+		}
+	}
+}
