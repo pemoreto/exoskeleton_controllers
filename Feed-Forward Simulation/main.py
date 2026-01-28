@@ -25,7 +25,7 @@ print('SCONE Version', sconepy.version())
 sconepy.set_array_dtype_float32()
 
 # 'hfd' or 'osim'
-model_type = 'hfd'
+model_type = 'osim'
 
 # Load SCONE simulation model with optimized par-file (if hfd). If osim use "H0918RS2v3_opt_det_param_osim.scone"
 par_file_hfd = '0774_0.895_0.880.par'
@@ -44,4 +44,4 @@ duration = 20
 start_actuation = 2
 
 # Run the SCONE simulation
-run_simulation_ff(model, start_actuation, [0, 0], [0, 0], [0, 0], True, duration, model_type)
+run_simulation_ff(model, start_actuation, [1, -1], [1, -1], [1, -1], True, duration, model_type)

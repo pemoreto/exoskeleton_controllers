@@ -7,8 +7,8 @@ ModelHyfydy {
 	use_opensim_activation_dynamics = 1
 	zero_velocity_equilibration = 1
 
-    CompositeController {
-	    << H0918RS2v3.scone >>
+  CompositeController {
+		<< H0918RS2v3_opt_det_param_hfd.scone >>
 	}
 
 	CompositeMeasure {

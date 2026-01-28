@@ -55,21 +55,34 @@ def safeBO_unified(init_points, num_iterations, bounds, beta, tau, save_plots):
         "objective_value": -train_y_obj[i].item(),
         "constraint_value": -train_y_con[i].item(),
         "acquisition_value": None,
-        "Kp": train_x[i][0].item(),
-        "Ki": train_x[i][1].item(),
-        "Kd": train_x[i][2].item(),
-        "Shift1": train_x[i][3].item(),
-        "Shift2": train_x[i][4].item(),
-        "Shift3": train_x[i][5].item(),
-        "Shift4": train_x[i][6].item(),
+        "Kp_hip": train_x[i][0].item(),
+        "Ki_hip": train_x[i][1].item(),
+        "Kd_hip": train_x[i][2].item(),
+        "Kp_knee": train_x[i][3].item(),
+        "Ki_knee": train_x[i][4].item(),
+        "Kd_knee": train_x[i][5].item(),
+        "Kp_ankle": train_x[i][6].item(),
+        "Ki_ankle": train_x[i][7].item(),
+        "Kd_ankle": train_x[i][8].item(),
+        "Shift1_hip": train_x[i][9].item(),
+        "Shift2_hip": train_x[i][10].item(),
+        "Shift3_hip": train_x[i][11].item(),
+        "Shift1_knee": train_x[i][12].item(),
+        "Shift2_knee": train_x[i][13].item(),
+        "Shift3_knee": train_x[i][14].item(),
+        "Shift4_knee": train_x[i][15].item(),
+        "Shift1_ankle": train_x[i][16].item(),
+        "Shift2_ankle": train_x[i][17].item(),
+        "Shift3_ankle": train_x[i][18].item(),
+        "Shift4_ankle": train_x[i][19].item(),
         "Stable": True if -train_y_con[i].item() > 0 else False,
         "last_com_height": last_com_height[-1].item(),
         "max_distance": max_distance[i].item()
     } for i in range(train_x.size(0))]
 
     # Define Gaussian Process models for objective and constraint
-    gp_obj = SingleTaskGP(train_x, train_y_obj, outcome_transform=Standardize(m=1), input_transform=Normalize(d=7))
-    gp_con = SingleTaskGP(train_x, train_y_con, outcome_transform=Standardize(m=1), input_transform=Normalize(d=7))
+    gp_obj = SingleTaskGP(train_x, train_y_obj, outcome_transform=Standardize(m=1), input_transform=Normalize(d=20))
+    gp_con = SingleTaskGP(train_x, train_y_con, outcome_transform=Standardize(m=1), input_transform=Normalize(d=20))
 
     mll_obj = ExactMarginalLogLikelihood(gp_obj.likelihood, gp_obj)
     mll_con = ExactMarginalLogLikelihood(gp_con.likelihood, gp_con)
@@ -101,7 +114,7 @@ def safeBO_unified(init_points, num_iterations, bounds, beta, tau, save_plots):
 
         initial_conditions = (
                 (bounds[1] - bounds[0]) *
-                torch.quasirandom.SobolEngine(dimension=7, scramble=True).draw(num_restarts)
+                torch.quasirandom.SobolEngine(dimension=20, scramble=True).draw(num_restarts)
                 + bounds[0]
         ).unsqueeze(1)
 
@@ -125,8 +138,8 @@ def safeBO_unified(init_points, num_iterations, bounds, beta, tau, save_plots):
         train_y_con = torch.cat([train_y_con, candidate_Y_con])
 
         # Update Gaussian Process models
-        gp_obj = SingleTaskGP(train_x, train_y_obj, outcome_transform=Standardize(m=1), input_transform=Normalize(d=7))
-        gp_con = SingleTaskGP(train_x, train_y_con, outcome_transform=Standardize(m=1), input_transform=Normalize(d=7))
+        gp_obj = SingleTaskGP(train_x, train_y_obj, outcome_transform=Standardize(m=1), input_transform=Normalize(d=20))
+        gp_con = SingleTaskGP(train_x, train_y_con, outcome_transform=Standardize(m=1), input_transform=Normalize(d=20))
 
         mll_obj = ExactMarginalLogLikelihood(gp_obj.likelihood, gp_obj)
         mll_con = ExactMarginalLogLikelihood(gp_con.likelihood, gp_con)
@@ -139,8 +152,8 @@ def safeBO_unified(init_points, num_iterations, bounds, beta, tau, save_plots):
         acquisition_values.append(acq_value.item())
 
         # Extract PID and shift parameters
-        pid_params = candidate_X[0][:3].numpy()
-        shift_params = candidate_X[0][3:].numpy()
+        pid_params = candidate_X[0][:9].numpy()
+        shift_params = candidate_X[0][9:].numpy()
 
         # Store all relevant values in history
         history.append({
@@ -148,13 +161,26 @@ def safeBO_unified(init_points, num_iterations, bounds, beta, tau, save_plots):
             "objective_value": -candidate_Y.item(),
             "constraint_value": -candidate_Y_con.item(),
             "acquisition_value": acq_value.item(),
-            "Kp": pid_params[0],
-            "Ki": pid_params[1],
-            "Kd": pid_params[2],
-            "Shift1": shift_params[0],
-            "Shift2": shift_params[1],
-            "Shift3": shift_params[2],
-            "Shift4": shift_params[3],
+            "Kp_hip": pid_params[0],
+            "Ki_hip": pid_params[1],
+            "Kd_hip": pid_params[2],
+            "Kp_knee": pid_params[3],
+            "Ki_knee": pid_params[4],
+            "Kd_knee": pid_params[5],
+            "Kp_ankle": pid_params[6],
+            "Ki_ankle": pid_params[7],
+            "Kd_ankle": pid_params[8],
+            "Shift1_hip": shift_params[0],
+            "Shift2_hip": shift_params[1],
+            "Shift3_hip": shift_params[2],
+            "Shift1_knee": shift_params[3],
+            "Shift2_knee": shift_params[4],
+            "Shift3_knee": shift_params[5],
+            "Shift4_knee": shift_params[6],
+            "Shift1_ankle": shift_params[7],
+            "Shift2_ankle": shift_params[8],
+            "Shift3_ankle": shift_params[9],
+            "Shift4_ankle": shift_params[10],
             "Stable": True if -candidate_Y_con.item() > 0 else False,
             "last_com_height": last_com_height,
             "max_distance": max_distance
@@ -185,11 +211,15 @@ def safeBO_unified(init_points, num_iterations, bounds, beta, tau, save_plots):
     # Generate a version identifier
     version = f"v_{-best_cost:.4f}"
 
-    results_dir = f"results_{version}"
+    results_dir = f"results/results_{version}"
     os.makedirs(results_dir, exist_ok=True)
 
-    print(f"Best PID parameters: Kp = {best_params[0].item():.4f}, Ki = {best_params[1].item():.4f}, Kd = {best_params[2].item():.4f}")
-    print(f"Best Shifts vertical: {best_params.numpy()[3:7]}")
+    print(f"Best PID parameters - Hip: Kp = {best_params[0].item():.4f}, Ki = {best_params[1].item():.4f}, Kd = {best_params[2].item():.4f}")
+    print(f"Best PID parameters - Knee: Kp = {best_params[3].item():.4f}, Ki = {best_params[4].item():.4f}, Kd = {best_params[5].item():.4f}")
+    print(f"Best PID parameters - Ankle: Kp = {best_params[6].item():.4f}, Ki = {best_params[7].item():.4f}, Kd = {best_params[8].item():.4f}")
+    print(f"Best Shifts - Hip: {best_params.numpy()[9:12]}")
+    print(f"Best Shifts - Knee: {best_params.numpy()[12:16]}")
+    print(f"Best Shifts - Ankle: {best_params.numpy()[16:19]}")
     print(f"Best cost: {-best_cost:.4f}")
 
     # Plot the best objective values over iterations
@@ -216,8 +246,8 @@ def safeBO_unified(init_points, num_iterations, bounds, beta, tau, save_plots):
     plt.show()
 
     # Save results to a text file
-    best_pid_param = best_params.numpy()[:3]
-    best_shifts = best_params.numpy()[3:]
+    best_pid_param = best_params.numpy()[:9]
+    best_shifts = best_params.numpy()[9:]
 
     txt_filename = os.path.join(results_dir, f"optimization_results_{version}.txt")
 

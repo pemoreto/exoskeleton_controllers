@@ -1,0 +1,7 @@
+Safe BO/Optimization_Plots/
+Safe BO/results/
+Safe BO/__pycache__/
+Feed-Forward Simulation/results_hfd/
+Feed-Forward Simulation/results_osim/
+Feed-Forward Simulation/__pycache__/
+Stability analysis/

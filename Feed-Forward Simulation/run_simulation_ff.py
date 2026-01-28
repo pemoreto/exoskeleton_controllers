@@ -98,23 +98,43 @@ def run_simulation_ff(model, start_actuation, input_hip, input_knee, input_ankle
 
         effort[i] = measure.current_result(model)
 
-        if t == start_actuation:
-            # Update PID controllers with the current knee positions and time step (0.01 as example)
-            input_array[-6] = input_hip[0]
-            input_array[-3] = input_hip[1]
-            input_array[-5] = input_knee[0]
-            input_array[-2] = input_knee[1]
-            input_array[-4] = input_ankle[0]
-            input_array[-1] = input_ankle[1]
+        if version == 'hfd':
+            if t == start_actuation:
+                # Update PID controllers with the current knee positions and time step (0.01 as example)
+                input_array[-6] = input_hip[0]
+                input_array[-3] = input_hip[1]
+                input_array[-5] = input_knee[0]
+                input_array[-2] = input_knee[1]
+                input_array[-4] = input_ankle[0]
+                input_array[-1] = input_ankle[1]
 
-            # Store the control inputs
-            input_hip_r[i] = input_array[-6]
-            input_hip_l[i] = input_array[-3]
-            input_knee_r[i] = input_array[-5]
-            input_knee_l[i] = input_array[-2]
-            input_ankle_r[i] = input_array[-4]
-            input_ankle_l[i] = input_array[-1]
+                # Store the control inputs
+                input_hip_r[i] = input_array[-6]
+                input_hip_l[i] = input_array[-3]
+                input_knee_r[i] = input_array[-5]
+                input_knee_l[i] = input_array[-2]
+                input_ankle_r[i] = input_array[-4]
+                input_ankle_l[i] = input_array[-1]
+        elif version == 'osim':
+            if t == start_actuation:
+                # Update PID controllers with the current knee positions and time step (0.01 as example)
+                input_array[-6] = input_hip[0]
+                input_array[-3] = input_hip[1]
+                input_array[-5] = input_knee[0]
+                input_array[-2] = input_knee[1]
+                input_array[-4] = input_ankle[0]
+                input_array[-1] = input_ankle[1]
 
+                # Store the control inputs
+                input_hip_r[i] = input_array[-6]
+                input_hip_l[i] = input_array[-5]
+                input_knee_r[i] = input_array[-4]
+                input_knee_l[i] = input_array[-3]
+                input_ankle_r[i] = input_array[-2]
+                input_ankle_l[i] = input_array[-1]
+        else:
+            raise ValueError("model_type must be either 'hfd' or 'osim'.")
+        
         # Advance the simulation to the next time step
         model.set_actuator_inputs(input_array)
         model.advance_simulation_to(t)

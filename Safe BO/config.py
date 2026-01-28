@@ -24,7 +24,7 @@ Note:
 """
 
 # Load the data from the Excel file
-new = True
+new = False
 if new:
     data = pd.read_excel('extracted_cycle_new.xlsx')
     time_cycle = data['time'].values
@@ -46,10 +46,10 @@ else:
 time = np.arange(0, 20.01, 0.01)
 
 # Detect extrema for right hip angles
-temp_min, _ = find_peaks(np.concatenate((-hip_r_ref, -hip_r_ref, -hip_r_ref)), distance=1)
+temp_min, _ = find_peaks(np.concatenate((-hip_r_ref, -hip_r_ref, -hip_r_ref)), distance=40)
 min_hip_idx_r = np.subtract(temp_min[(len(time_cycle)-1 < temp_min) & (temp_min < 2*len(time_cycle))], len(time_cycle))
 
-temp_max, _ = find_peaks(np.concatenate((hip_r_ref, hip_r_ref, hip_r_ref)), distance=1)
+temp_max, _ = find_peaks(np.concatenate((hip_r_ref, hip_r_ref, hip_r_ref)), distance=40)
 max_hip_idx_r = np.subtract(temp_max[(len(time_cycle)-1 < temp_max) & (temp_max < 2*len(time_cycle))], len(time_cycle))
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 12))
@@ -85,10 +85,10 @@ plt.tight_layout()
 plt.close()
 
 # Detect extrema for left hip angles
-temp_min, _ = find_peaks(np.concatenate((-hip_l_ref, -hip_l_ref, -hip_l_ref)), distance=1)
+temp_min, _ = find_peaks(np.concatenate((-hip_l_ref, -hip_l_ref, -hip_l_ref)), distance=40)
 min_hip_idx_l = np.subtract(temp_min[(len(time_cycle)-1 < temp_min) & (temp_min < 2*len(time_cycle))], len(time_cycle))
 
-temp_max, _ = find_peaks(np.concatenate((hip_l_ref, hip_l_ref, hip_l_ref)), distance=1)
+temp_max, _ = find_peaks(np.concatenate((hip_l_ref, hip_l_ref, hip_l_ref)), distance=40)
 max_hip_idx_l = np.subtract(temp_max[(len(time_cycle)-1 < temp_max) & (temp_max < 2*len(time_cycle))], len(time_cycle))
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 12))
@@ -124,10 +124,10 @@ plt.tight_layout()
 plt.close()
 
 # Detect extrema for right knee angles
-temp_min, _ = find_peaks(np.concatenate((-knee_r_ref, -knee_r_ref, -knee_r_ref)), distance=1)
+temp_min, _ = find_peaks(np.concatenate((-knee_r_ref, -knee_r_ref, -knee_r_ref)), distance=40)
 min_knee_idx_r = np.subtract(temp_min[(len(time_cycle)-1 < temp_min) & (temp_min < 2*len(time_cycle))], len(time_cycle))
 
-temp_max, _ = find_peaks(np.concatenate((knee_r_ref, knee_r_ref, knee_r_ref)), distance=1)
+temp_max, _ = find_peaks(np.concatenate((knee_r_ref, knee_r_ref, knee_r_ref)), distance=40)
 max_knee_idx_r = np.subtract(temp_max[(len(time_cycle)-1 < temp_max) & (temp_max < 2*len(time_cycle))], len(time_cycle))
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 12))
@@ -163,10 +163,10 @@ plt.tight_layout()
 plt.close()
 
 # Detect extrema for left knee angles
-temp_min, _ = find_peaks(np.concatenate((-knee_l_ref, -knee_l_ref, -knee_l_ref)), distance=1)
+temp_min, _ = find_peaks(np.concatenate((-knee_l_ref, -knee_l_ref, -knee_l_ref)), distance=40)
 min_knee_idx_l = np.subtract(temp_min[(len(time_cycle)-1 < temp_min) & (temp_min < 2*len(time_cycle))], len(time_cycle))
 
-temp_max, _ = find_peaks(np.concatenate((knee_l_ref, knee_l_ref, knee_l_ref)), distance=1)
+temp_max, _ = find_peaks(np.concatenate((knee_l_ref, knee_l_ref, knee_l_ref)), distance=40)
 max_knee_idx_l = np.subtract(temp_max[(len(time_cycle)-1 < temp_max) & (temp_max < 2*len(time_cycle))], len(time_cycle))
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 12))
@@ -202,10 +202,10 @@ plt.tight_layout()
 plt.close()
 
 # Detect extrema for right ankle angles
-temp_min, _ = find_peaks(np.concatenate((-ankle_r_ref, -ankle_r_ref, -ankle_r_ref)), distance=1)
+temp_min, _ = find_peaks(np.concatenate((-ankle_r_ref, -ankle_r_ref, -ankle_r_ref)), distance=40)
 min_ankle_idx_r = np.subtract(temp_min[(len(time_cycle)-1 < temp_min) & (temp_min < 2*len(time_cycle))], len(time_cycle))
 
-temp_max, _ = find_peaks(np.concatenate((ankle_r_ref, ankle_r_ref, ankle_r_ref)), distance=1)
+temp_max, _ = find_peaks(np.concatenate((ankle_r_ref, ankle_r_ref, ankle_r_ref)), distance=40)
 max_ankle_idx_r = np.subtract(temp_max[(len(time_cycle)-1 < temp_max) & (temp_max < 2*len(time_cycle))], len(time_cycle))
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 12))
@@ -241,10 +241,10 @@ plt.tight_layout()
 plt.close()
 
 # Detect extrema for left ankle angles
-temp_min, _ = find_peaks(np.concatenate((-ankle_l_ref, -ankle_l_ref, -ankle_l_ref)), distance=1)
+temp_min, _ = find_peaks(np.concatenate((-ankle_l_ref, -ankle_l_ref, -ankle_l_ref)), distance=40)
 min_ankle_idx_l = np.subtract(temp_min[(len(time_cycle)-1 < temp_min) & (temp_min < 2*len(time_cycle))], len(time_cycle))
 
-temp_max, _ = find_peaks(np.concatenate((ankle_l_ref, ankle_l_ref, ankle_l_ref)), distance=1)
+temp_max, _ = find_peaks(np.concatenate((ankle_l_ref, ankle_l_ref, ankle_l_ref)), distance=40)
 max_ankle_idx_l = np.subtract(temp_max[(len(time_cycle)-1 < temp_max) & (temp_max < 2*len(time_cycle))], len(time_cycle))
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 12))

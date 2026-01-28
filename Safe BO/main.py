@@ -124,10 +124,10 @@ axs[1].grid(True)
 axs[1].legend(loc="upper right")
 
 plt.tight_layout()
-plt.show()
-#plt.close()
-#plt.close()
-#plt.close()
+plt.close()
+plt.close()
+plt.close()
+#plt.show()
 
 # SCONE Simulation Initialization
 sconepy.set_log_level(3)
@@ -135,18 +135,40 @@ print('SCONE Version', sconepy.version())
 sconepy.set_array_dtype_float32()
 
 # Load SCONE simulation model
-model = sconepy.load_model('Simulation_H0918RS2_actuated/Simulation_H0918RS2_actuated.scone', '0774_0.895_0.880.par')
+model_type = 'osim'
+
+par_file_hfd = '0774_0.895_0.880.par'
+
+if model_type == 'hfd':
+    model = sconepy.load_model(
+        f'Simulation_H0918RS2_actuated/Simulation_H0918RS2_actuated_hfd.scone', par_file_hfd)
+elif model_type == 'osim':
+    model = sconepy.load_model(
+        f'Simulation_H0918RS2_actuated/Simulation_H0918RS2_actuated.scone')
+else:
+    raise ValueError("model_type must be either 'hfd' or 'osim'.")
 
 # Define search space bounds for Bayesian Optimization
-bounds = torch.tensor([[0.1, 0, 0, 0, -2, 0, -2],  # Lower bounds
-                       [3, 1.5, 1.5, 2, 0, 2, 0]],  # Upper bounds
+
+shift_lbounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+shift_ubounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+#shift_lbounds = [0, -2, -2, 0, -2, 0, -2, 0, -2, 0, -2]
+#shift_ubounds = [2, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0]
+
+pid_lbounds = [0.1, 0, 0, 0.1, 0, 0, 0.1, 0, 0]
+pid_ubounds = [3, 1.5, 1.5, 3, 1.5, 1.5, 3, 1.5, 1.5]
+#pid_lbounds = [0.1, 0, 0, 0.1, 0, 0, 0.1, 0, 0]
+#pid_ubounds = [3, 1.5, 1.5, 3, 1.5, 1.5, 3, 1.5, 1.5]
+
+bounds = torch.tensor([pid_lbounds + shift_lbounds,  # Lower bounds
+                       pid_ubounds + shift_ubounds],  # Upper bounds
                       dtype=torch.double)
 
 # Add init_points to improve the performance
 init_points = [
-    [0, 0, 0, 0, 0, 0, 0],
-    [0,	0, 0, 1.04398478, -0.555836298, 1.599756304, -1.241550102],
-    [0.123221057, 0.177307192, 0.034104545, 1.706721544, -0.348581314, 1.769079804, -0.172509313]
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0,	0, 0, 0, 0, 0, 0, 0, 0, 1.04, -0.55, -1.24, 1.04, -0.55, 1.59, -1.24, 1.04, -0.55, 1.59, -1.24],
+    [0.12, 0.17, 0.03, 0.12, 0.17, 0.03, 0.12, 0.17, 0.03, 1.70, -0.34, -0.17, 1.70, -0.34, 1.76, -0.17, 1.70, -0.34, 1.76, -0.17]
 ]
 
 '''
@@ -154,23 +176,39 @@ other good points:
     [0,	0,	0, 1.04398478, -0.555836298, 1.599756304,	-1.241550102],
     [0.123221057, 0.177307192, 0.034104545, 1.706721544, -0.348581314, 1.769079804, -0.172509313]
 
-# Start Bayesian Optimization (BO) for PID tuning
-print('\n------------ Starting Bayesian Optimization ------------')
-start_time_BO = time.time()
-best_pid_param, best_shifts, version = safeBO_unified(init_points, 30, bounds, 1, 0.1, True)
-end_time_BO = time.time()
-print(f'\nBO ended. Time taken: {end_time_BO - start_time_BO:.2f} seconds')
 '''
-pid_param_hip = [0, 0, 0]
-pid_param_knee = [1.69953865, 0.07541722, 0.03242994]
-pid_param_ankle = [0, 0, 0]
-shifts = [0.7666024,  -0.16908622,  0.82656652, -1.35391402]
-version = 'v_677.1206'
+
+bo = False
+
+if bo:
+    # Start Bayesian Optimization (BO) for PID tuning
+    print('\n------------ Starting Bayesian Optimization ------------')
+    start_time_BO = time.time()
+    best_pid_param, best_shifts, version = safeBO_unified(init_points, 50, bounds, 1, 0.1, True)
+    end_time_BO = time.time()
+    print(f'\nBO ended. Time taken: {end_time_BO - start_time_BO:.2f} seconds')
+
+    pid = best_pid_param
+    shifts = best_shifts
+else:
+    pid_param_hip = np.array([0, 0, 0])
+    pid_param_knee = np.array([1.69953865, 0.07541722, 0.03242994])
+    #pid_param_knee = np.array([0, 0, 0])
+    pid_param_ankle = np.array([0, 0, 0])
+    shifts_hip = np.array([0, 0, 0])
+    shifts_knee = np.array([0.7666024,  -0.16908622,  0.82656652, -1.35391402])
+    #shifts_knee = np.array([0, 0, 0, 0])
+    shifts_ankle = np.array([0, 0, 0, 0])
+    version = 'manual'
+
+    pid = np.concatenate((pid_param_hip, pid_param_knee, pid_param_ankle))
+    shifts = np.concatenate((shifts_hip, shifts_knee, shifts_ankle))
+
 
 # Run the SCONE simulation with optimized PID parameters
 print('\n ------------ Starting Simulation ------------')
 start_time_sim = time.time()
-run_simulation(model, pid_param_hip, pid_param_knee, pid_param_ankle, shifts, True, time_range, version)
+run_simulation(model, pid, shifts, True, time_range, version)
 end_time_sim = time.time()
 print(f'\nSimulation ended. Time taken: {end_time_sim - start_time_sim:.2f} seconds')
 
