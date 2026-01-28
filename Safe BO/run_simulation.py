@@ -212,18 +212,18 @@ def run_simulation(model, pid, shifts, store_data, time_span, version):
 
             # Update PID controllers with the current knee positions and time step (0.01 as example)
             input_array[-6] = pid_hip_r.update(hip_r[i], 0.01)
-            input_array[-5] = pid_knee_r.update(knee_r[i], 0.01)
-            input_array[-4] = pid_ankle_r.update(ankle_r[i], 0.01)
-            input_array[-3] = pid_hip_l.update(hip_l[i], 0.01)
-            input_array[-2] = pid_knee_l.update(knee_l[i], 0.01)
+            input_array[-5] = pid_hip_l.update(hip_l[i], 0.01)
+            input_array[-4] = pid_knee_r.update(knee_r[i], 0.01)
+            input_array[-3] = pid_knee_l.update(knee_l[i], 0.01)
+            input_array[-2] = pid_ankle_r.update(ankle_r[i], 0.01)
             input_array[-1] = pid_ankle_l.update(ankle_l[i], 0.01)
 
             # Store the control inputs
             input_hip_r[i] = input_array[-6]
-            input_knee_r[i] = input_array[-5]
-            input_ankle_r[i] = input_array[-4]
-            input_hip_l[i] = input_array[-3]
-            input_knee_l[i] = input_array[-2]
+            input_hip_l[i] = input_array[-5]
+            input_knee_r[i] = input_array[-4]
+            input_knee_l[i] = input_array[-3]
+            input_ankle_r[i] = input_array[-2]
             input_ankle_l[i] = input_array[-1]
 
         # Advance the simulation to the next time step
