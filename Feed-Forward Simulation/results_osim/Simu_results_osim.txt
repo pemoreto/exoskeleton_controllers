@@ -1,3 +1,0 @@
-Mean current result: 718.4465750943142
-Model type: osim
-Duration of calculation: 10.464711427688599
