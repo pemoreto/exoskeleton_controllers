@@ -1,3 +1,0 @@
-Mean current result: 544.5845070477617
-Model type: hfd
-Duration of calculation: 0.5626540184020996
