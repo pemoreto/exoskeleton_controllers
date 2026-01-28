@@ -150,8 +150,8 @@ else:
 
 # Define search space bounds for Bayesian Optimization
 
-shift_lbounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-shift_ubounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+shift_lbounds = [0, -2, -2, 0, -2, 0, -2, 0, -2, 0, -2]
+shift_ubounds = [2, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0]
 #shift_lbounds = [0, -2, -2, 0, -2, 0, -2, 0, -2, 0, -2]
 #shift_ubounds = [2, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0]
 
@@ -184,7 +184,7 @@ if bo:
     # Start Bayesian Optimization (BO) for PID tuning
     print('\n------------ Starting Bayesian Optimization ------------')
     start_time_BO = time.time()
-    best_pid_param, best_shifts, version = safeBO_unified(model_type, init_points, 30, bounds, 1, 0.1, True)
+    best_pid_param, best_shifts, version = safeBO_unified(model_type, init_points, 50, bounds, 1, 0.1, True)
     end_time_BO = time.time()
     print(f'\nBO ended. Time taken: {end_time_BO - start_time_BO:.2f} seconds')
 

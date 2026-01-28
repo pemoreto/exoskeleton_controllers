@@ -84,12 +84,12 @@ def obj_con_function(model_type, params, iter, save_plots):
 
     # Extract and apply vertical shifts to knee
     v_shift_knee_max_1, v_shift_knee_min_1, v_shift_knee_max_2, v_shift_knee_min_2 = params[12:16]
-    cp_knee_ang_r_shifted = cp_knee_ang_r + np.array([v_shift_knee_max_1, v_shift_knee_min_1, v_shift_knee_max_2, v_shift_knee_min_2])
+    cp_knee_ang_r_shifted = cp_knee_ang_r + np.array([v_shift_knee_min_1, v_shift_knee_max_1, v_shift_knee_min_2, v_shift_knee_max_2])
     cp_knee_ang_l_shifted = cp_knee_ang_l + np.array([v_shift_knee_min_2, v_shift_knee_max_2, v_shift_knee_min_1, v_shift_knee_max_1])
 
     # Extract and apply vertical shifts to ankle
     v_shift_ankle_max_1, v_shift_ankle_min_1, v_shift_ankle_max_2, v_shift_ankle_min_2 = params[16:]
-    cp_ankle_ang_r_shifted = cp_ankle_ang_r + np.array([v_shift_ankle_max_1, v_shift_ankle_min_1, v_shift_ankle_max_2, v_shift_ankle_min_2])
+    cp_ankle_ang_r_shifted = cp_ankle_ang_r + np.array([v_shift_ankle_min_1, v_shift_ankle_max_1, v_shift_ankle_min_2, v_shift_ankle_max_2])
     cp_ankle_ang_l_shifted = cp_ankle_ang_l + np.array([v_shift_ankle_min_2, v_shift_ankle_max_2, v_shift_ankle_min_1, v_shift_ankle_max_1])
 
     # Generate hip reference trajectories
