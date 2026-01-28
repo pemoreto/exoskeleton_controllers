@@ -12,7 +12,7 @@ from botorch.models.transforms.input import Normalize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from obj_con_function import obj_con_function
 
-def safeBO_unified(init_points, num_iterations, bounds, beta, tau, save_plots):
+def safeBO_unified(model_type, init_points, num_iterations, bounds, beta, tau, save_plots):
     """
     Perform constrained Bayesian Optimization to tune PID controller parameters
     along with vertical shift parameters for a gait model.
@@ -22,6 +22,7 @@ def safeBO_unified(init_points, num_iterations, bounds, beta, tau, save_plots):
     to safely explore the parameter space.
 
     Parameters:
+    - model_type: osim or hfd
     - init_points (array-like): Initial sample points (each with 7 parameters: Kp, Ki, Kd, Shift1-4).
     - num_iterations (int): Number of Bayesian Optimization iterations to perform.
     - bounds (torch.Tensor): Tensor specifying the lower and upper bounds for each parameter (shape: 2 x 7).
@@ -43,7 +44,7 @@ def safeBO_unified(init_points, num_iterations, bounds, beta, tau, save_plots):
     num_initial_points = len(init_points)
 
     # Evaluate the objective and constraint functions using the unified function
-    results = [obj_con_function(x, 0, False) for x in train_x]
+    results = [obj_con_function(model_type, x, 0, False) for x in train_x]
     train_y_obj = torch.tensor([-r[0] for r in results], dtype=torch.double).unsqueeze(-1)
     train_y_con = torch.tensor([-r[1] for r in results], dtype=torch.double).unsqueeze(-1)
     last_com_height = torch.tensor([r[2] for r in results], dtype=torch.double).unsqueeze(-1)
@@ -128,7 +129,7 @@ def safeBO_unified(init_points, num_iterations, bounds, beta, tau, save_plots):
                                                )
 
         # Evaluate both objective and constraint at the new candidate
-        candidate_Y, candidate_Y_con, last_com_height, max_distance = obj_con_function(candidate_X[0], i, save_plots)
+        candidate_Y, candidate_Y_con, last_com_height, max_distance = obj_con_function(model_type, candidate_X[0], i, save_plots)
         candidate_Y = torch.tensor([-candidate_Y], dtype=torch.double).unsqueeze(-1)
         candidate_Y_con = torch.tensor([-candidate_Y_con], dtype=torch.double).unsqueeze(-1)
 

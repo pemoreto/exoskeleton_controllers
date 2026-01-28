@@ -30,7 +30,7 @@ Outputs:
 - max_distance_r: Largest distance in Poincaré return map (indicates instability).
 """
 
-def obj_con_function(params, iter, save_plots):
+def obj_con_function(model_type, params, iter, save_plots):
     """
     Runs the simulation once and computes:
     - Objective: Metabolic cost (total penalty)
@@ -44,7 +44,16 @@ def obj_con_function(params, iter, save_plots):
     """
 
     # Load SCONE model
-    model = sconepy.load_model('Simulation_H0918RS2_actuated/Simulation_H0918RS2_actuated.scone')
+    par_file_hfd = '0774_0.895_0.880.par'
+
+    if model_type == 'hfd':
+        model = sconepy.load_model(
+            f'Simulation_H0918RS2_actuated/Simulation_H0918RS2_actuated_hfd.scone', par_file_hfd)
+    elif model_type == 'osim':
+        model = sconepy.load_model(
+            f'Simulation_H0918RS2_actuated/Simulation_H0918RS2_actuated.scone')
+    else:
+        raise ValueError("model_type must be either 'hfd' or 'osim'.")
     measure = model.measure()
     model.set_store_data(True)
 
@@ -176,17 +185,17 @@ def obj_con_function(params, iter, save_plots):
 
             # Compute control torques
             input_array[-6] = pid_hip_r.update(hip_r[i], 0.01)
-            input_array[-5] = pid_knee_r.update(knee_r[i], 0.01)
-            input_array[-4] = pid_ankle_r.update(ankle_r[i], 0.01)
-            input_array[-3] = pid_hip_l.update(hip_l[i], 0.01)
-            input_array[-2] = pid_knee_l.update(knee_l[i], 0.01)
+            input_array[-5] = pid_hip_l.update(hip_l[i], 0.01)
+            input_array[-4] = pid_knee_r.update(knee_r[i], 0.01)
+            input_array[-3] = pid_knee_l.update(knee_l[i], 0.01)
+            input_array[-2] = pid_ankle_r.update(ankle_r[i], 0.01)
             input_array[-1] = pid_ankle_l.update(ankle_l[i], 0.01)
 
             input_hip_r[i] = input_array[-6]
-            input_knee_r[i] = input_array[-5]
-            input_ankle_r[i] = input_array[-4]
-            input_hip_l[i] = input_array[-3]
-            input_knee_l[i] = input_array[-2]
+            input_hip_l[i] = input_array[-5]
+            input_knee_r[i] = input_array[-4]
+            input_knee_l[i] = input_array[-3]
+            input_ankle_r[i] = input_array[-2]
             input_ankle_l[i] = input_array[-1]
 
         # Apply actuator inputs and advance simulation
