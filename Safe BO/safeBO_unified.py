@@ -220,7 +220,7 @@ def safeBO_unified(model_type, init_points, num_iterations, bounds, beta, tau, s
     print(f"Best PID parameters - Ankle: Kp = {best_params[6].item():.4f}, Ki = {best_params[7].item():.4f}, Kd = {best_params[8].item():.4f}")
     print(f"Best Shifts - Hip: {best_params.numpy()[9:12]}")
     print(f"Best Shifts - Knee: {best_params.numpy()[12:16]}")
-    print(f"Best Shifts - Ankle: {best_params.numpy()[16:19]}")
+    print(f"Best Shifts - Ankle: {best_params.numpy()[16:20]}")
     print(f"Best cost: {-best_cost:.4f}")
 
     # Plot the best objective values over iterations

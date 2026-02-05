@@ -236,7 +236,7 @@ def run_simulation(model, pid, shifts, store_data, time_span, version):
     tot_error_ankle = np.sum(np.abs(ankle_r - ankle_ref_r)) + np.sum(np.abs(ankle_l - ankle_ref_l))
 
     #print(f"\nPID Parameters: {param}")
-    print(f"Vertical Shifts: {shifts[:10]}")
+    print(f"Vertical Shifts: {shifts[:11]}")
     print(f"Mean current results: {np.mean(effort[250:])}")
     print(f"Tot Error Hip (simulation-ref): {tot_error_hip}\n")
     print(f"Tot Error Knee (simulation-ref): {tot_error_knee}\n")
@@ -386,7 +386,7 @@ def run_simulation(model, pid, shifts, store_data, time_span, version):
     axs[1].legend(loc="upper right")
 
     plt.tight_layout()
-    plt.savefig(os.path.join(results_dir, f"knee_angle_trajectory_{version}.svg"), dpi=300)
+    plt.savefig(os.path.join(results_dir, f"ankle_angle_trajectory_{version}.svg"), dpi=300)
     plt.show()
 
     #Inputs Hip

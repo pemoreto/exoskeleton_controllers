@@ -150,15 +150,19 @@ else:
 
 # Define search space bounds for Bayesian Optimization
 
+#Best results
+#shift_lbounds = [0.08768535, -0.1048403,  -0.14096331, 0.873075066, -1.44204189, 0.951598864, -1.92264633, 0, 0, 0, 0]
+#shift_ubounds = [0.08768535, -0.1048403,  -0.14096331, 0.873075066, -1.44204189, 0.951598864, -1.92264633, 0, 0, 0, 0]
+
 shift_lbounds = [0, -2, -2, 0, -2, 0, -2, 0, -2, 0, -2]
 shift_ubounds = [2, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0]
-#shift_lbounds = [0, -2, -2, 0, -2, 0, -2, 0, -2, 0, -2]
-#shift_ubounds = [2, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0]
+
+#Best results
+#pid_lbounds = [0.5139, 1.0713, 0.4338, 1.7421, 0.1614, 0.1025, 1.5591, 0.0199, 0.3999]
+#pid_ubounds = [0.5139, 1.0713, 0.4338, 1.7421, 0.1614, 0.1025, 1.5591, 0.0199, 0.3999]
 
 pid_lbounds = [0.1, 0, 0, 0.1, 0, 0, 0.1, 0, 0]
 pid_ubounds = [3, 1.5, 1.5, 3, 1.5, 1.5, 3, 1.5, 1.5]
-#pid_lbounds = [0.1, 0, 0, 0.1, 0, 0, 0.1, 0, 0]
-#pid_ubounds = [3, 1.5, 1.5, 3, 1.5, 1.5, 3, 1.5, 1.5]
 
 bounds = torch.tensor([pid_lbounds + shift_lbounds,  # Lower bounds
                        pid_ubounds + shift_ubounds],  # Upper bounds
@@ -169,6 +173,8 @@ init_points = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0,	0, 0, 0, 0, 0, 0, 0, 0, 1.04, -0.55, -1.24, 1.04, -0.55, 1.59, -1.24, 1.04, -0.55, 1.59, -1.24],
     [0.12, 0.17, 0.03, 0.12, 0.17, 0.03, 0.12, 0.17, 0.03, 1.70, -0.34, -0.17, 1.70, -0.34, 1.76, -0.17, 1.70, -0.34, 1.76, -0.17]
+    #[0.31, 1.02, 0.25, 2.68, 0.26, 0.82, 1.03, 0.77, 0.06, 1.44, -0.21, -0.63, 0.78, -1.15, 0.26, -0.69, 0.91, -0.10, 0.25, -1.48],
+    #[0.54, 0.99, 0.43, 1.75, 0.15, 0.10, 1.56, 0.02, 0.40, 0, 0, 0, 0.93, -1.43, 1.17, -1.97, 0, 0, 0, 0]
 ]
 
 '''
@@ -184,7 +190,7 @@ if bo:
     # Start Bayesian Optimization (BO) for PID tuning
     print('\n------------ Starting Bayesian Optimization ------------')
     start_time_BO = time.time()
-    best_pid_param, best_shifts, version = safeBO_unified(model_type, init_points, 50, bounds, 1, 0.1, True)
+    best_pid_param, best_shifts, version = safeBO_unified(model_type, init_points, 200, bounds, 1, 0.1, True)
     end_time_BO = time.time()
     print(f'\nBO ended. Time taken: {end_time_BO - start_time_BO:.2f} seconds')
 
