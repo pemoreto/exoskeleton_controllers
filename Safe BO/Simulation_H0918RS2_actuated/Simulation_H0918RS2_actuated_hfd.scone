@@ -1,0 +1,17 @@
+ModelHyfydy {
+	model_file = H0918v3_actuated.hfd
+	state_init_file = InitStateH0918Gait10ActA.zml
+	initial_state_offset = 0
+	initial_load = 1
+	fixed_control_step_size = 0.005
+	use_opensim_activation_dynamics = 1
+	zero_velocity_equilibration = 1
+	
+	CompositeController {
+		<< H0918RS2v3.scone >>
+	}
+	
+	CompositeMeasure {
+		<< EffortWangCubed2000.scone >>
+	}
+}

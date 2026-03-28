@@ -30,7 +30,7 @@ Outputs:
 - max_distance_r: Largest distance in Poincaré return map (indicates instability).
 """
 
-def obj_con_function(params, iter, save_plots):
+def obj_con_function(model_type, params, iter, save_plots):
     """
     Runs the simulation once and computes:
     - Objective: Metabolic cost (total penalty)
@@ -44,43 +44,88 @@ def obj_con_function(params, iter, save_plots):
     """
 
     # Load SCONE model
-    model = sconepy.load_model('Simulation_H0918RS2_actuated/Simulation_H0918RS2_actuated.scone')
+    par_file_hfd = '0774_0.895_0.880.par'
+
+    if model_type == 'hfd':
+        model = sconepy.load_model(
+            f'Simulation_H0918RS2_actuated/Simulation_H0918RS2_actuated_hfd.scone', par_file_hfd)
+    elif model_type == 'osim':
+        model = sconepy.load_model(
+            f'Simulation_H0918RS2_actuated/Simulation_H0918RS2_actuated.scone')
+    else:
+        raise ValueError("model_type must be either 'hfd' or 'osim'.")
     measure = model.measure()
     model.set_store_data(True)
 
     # Extract PID parameters
-    Kp, Ki, Kd = params[:3]
+    Kp_hip, Ki_hip, Kd_hip = params[:3]
+    Kp_knee, Ki_knee, Kd_knee = params[3:6]
+    Kp_ankle, Ki_ankle, Kd_ankle = params[6:9]
 
     time_cycle = config.time_cycle
     time = config.time
-    cp_idx_r = config.cp_idx_r
-    cp_ang_r = config.cp_ang_r
-    cp_idx_l = config.cp_idx_l
-    cp_ang_l = config.cp_ang_l
+    cp_hip_idx_r = config.cp_hip_idx_r
+    cp_hip_ang_r = config.cp_hip_ang_r
+    cp_hip_idx_l = config.cp_hip_idx_l
+    cp_hip_ang_l = config.cp_hip_ang_l
+    cp_knee_idx_r = config.cp_knee_idx_r
+    cp_knee_ang_r = config.cp_knee_ang_r
+    cp_knee_idx_l = config.cp_knee_idx_l
+    cp_knee_ang_l = config.cp_knee_ang_l
+    cp_ankle_idx_r = config.cp_ankle_idx_r
+    cp_ankle_ang_r = config.cp_ankle_ang_r
+    cp_ankle_idx_l = config.cp_ankle_idx_l
+    cp_ankle_ang_l = config.cp_ankle_ang_l
 
-    # Extract and apply vertical shifts
-    v_shift_max_1, v_shift_min_1, v_shift_max_2, v_shift_min_2 = params[3:]
-    cp_ang_r_shifted = cp_ang_r + np.array([v_shift_min_1, v_shift_max_1, v_shift_min_2, v_shift_max_2])
-    cp_ang_l_shifted = cp_ang_l + np.array([v_shift_min_2, v_shift_max_2, v_shift_min_1, v_shift_max_1])
+    # Extract and apply vertical shifts to hip
+    v_shift_hip_max_1, v_shift_hip_min_1, v_shift_hip_min_2 = params[9:12]
+    cp_hip_ang_r_shifted = cp_hip_ang_r + np.array([v_shift_hip_min_1, v_shift_hip_min_2, v_shift_hip_max_1])
+    cp_hip_ang_l_shifted = cp_hip_ang_l + np.array([v_shift_hip_min_2, v_shift_hip_max_1, v_shift_hip_min_1])
+
+    # Extract and apply vertical shifts to knee
+    v_shift_knee_max_1, v_shift_knee_min_1, v_shift_knee_max_2, v_shift_knee_min_2 = params[12:16]
+    cp_knee_ang_r_shifted = cp_knee_ang_r + np.array([v_shift_knee_min_1, v_shift_knee_max_1, v_shift_knee_min_2, v_shift_knee_max_2])
+    cp_knee_ang_l_shifted = cp_knee_ang_l + np.array([v_shift_knee_min_2, v_shift_knee_max_2, v_shift_knee_min_1, v_shift_knee_max_1])
+
+    # Extract and apply vertical shifts to ankle
+    v_shift_ankle_max_1, v_shift_ankle_min_1, v_shift_ankle_max_2, v_shift_ankle_min_2 = params[16:]
+    cp_ankle_ang_r_shifted = cp_ankle_ang_r + np.array([v_shift_ankle_min_1, v_shift_ankle_max_1, v_shift_ankle_min_2, v_shift_ankle_max_2])
+    cp_ankle_ang_l_shifted = cp_ankle_ang_l + np.array([v_shift_ankle_min_2, v_shift_ankle_max_2, v_shift_ankle_min_1, v_shift_ankle_max_1])
+
+    # Generate hip reference trajectories
+    spline_ref_hip_r, spline_ref_hip_l = create_splines(cp_hip_idx_r, cp_hip_ang_r, cp_hip_idx_l, cp_hip_ang_l)
+    hip_r_ref_shift, hip_l_ref_shift = create_splines(cp_hip_idx_r, cp_hip_ang_r_shifted, cp_hip_idx_l, cp_hip_ang_l_shifted)
 
     # Generate knee reference trajectories
-    spline_ref_r, spline_ref_l = create_splines(cp_idx_r, cp_ang_r, cp_idx_l, cp_ang_l)
-    knee_r_ref_shift, knee_l_ref_shift = create_splines(cp_idx_r, cp_ang_r_shifted, cp_idx_l, cp_ang_l_shifted)
+    spline_ref_knee_r, spline_ref_knee_l = create_splines(cp_knee_idx_r, cp_knee_ang_r, cp_knee_idx_l, cp_knee_ang_l)
+    knee_r_ref_shift, knee_l_ref_shift = create_splines(cp_knee_idx_r, cp_knee_ang_r_shifted, cp_knee_idx_l, cp_knee_ang_l_shifted)
+
+    # Generate ankle reference trajectories
+    spline_ref_ankle_r, spline_ref_ankle_l = create_splines(cp_ankle_idx_r, cp_ankle_ang_r, cp_ankle_idx_l, cp_ankle_ang_l)
+    ankle_r_ref_shift, ankle_l_ref_shift = create_splines(cp_ankle_idx_r, cp_ankle_ang_r_shifted, cp_ankle_idx_l, cp_ankle_ang_l_shifted)
 
     # Create linear interpolation functions
+    linear_interp_hip_r = interp1d(time_cycle, hip_r_ref_shift, kind='linear', fill_value='extrapolate')
+    linear_interp_hip_l = interp1d(time_cycle, hip_l_ref_shift, kind='linear', fill_value='extrapolate')
     linear_interp_knee_r = interp1d(time_cycle, knee_r_ref_shift, kind='linear', fill_value='extrapolate')
     linear_interp_knee_l = interp1d(time_cycle, knee_l_ref_shift, kind='linear', fill_value='extrapolate')
+    linear_interp_ankle_r = interp1d(time_cycle, ankle_r_ref_shift, kind='linear', fill_value='extrapolate')
+    linear_interp_ankle_l = interp1d(time_cycle, ankle_l_ref_shift, kind='linear', fill_value='extrapolate')
 
     # Initialize PID controllers
-    pid_r = PID(Kp, Ki, Kd, setpoint=linear_interp_knee_r(0))
-    pid_l = PID(Kp, Ki, Kd, setpoint=linear_interp_knee_l(0))
+    pid_hip_r = PID(Kp_hip, Ki_hip, Kd_hip, setpoint=linear_interp_hip_r(0))
+    pid_hip_l = PID(Kp_hip, Ki_hip, Kd_hip, setpoint=linear_interp_hip_l(0))
+    pid_knee_r = PID(Kp_knee, Ki_knee, Kd_knee, setpoint=linear_interp_knee_r(0))
+    pid_knee_l = PID(Kp_knee, Ki_knee, Kd_knee, setpoint=linear_interp_knee_l(0))
+    pid_ankle_r = PID(Kp_ankle, Ki_ankle, Kd_ankle, setpoint=linear_interp_ankle_r(0))
+    pid_ankle_l = PID(Kp_ankle, Ki_ankle, Kd_ankle, setpoint=linear_interp_ankle_l(0))
 
     # Preallocate arrays
-    knee_ref_r, knee_ref_l, knee_r, knee_l, input_r, input_l, estimator_r, estimator_l, effort, com_height = [
-        np.zeros_like(time) for _ in range(10)]
-    knee_r_u, knee_l_u = [np.zeros_like(time) for _ in range(2)]
+    hip_ref_r, hip_ref_l, hip_r, hip_l,  knee_ref_r, knee_ref_l, knee_r, knee_l, ankle_ref_r, ankle_ref_l, ankle_r, ankle_l = [np.zeros_like(time) for _ in range(12)]
+    input_hip_r, input_hip_l, input_knee_r, input_knee_l, input_ankle_r, input_ankle_l, estimator_r, estimator_l, effort, com_height = [np.zeros_like(time) for _ in range(10)]
+    hip_r_u, hip_l_u, knee_r_u, knee_l_u, ankle_r_u, ankle_l_u = [np.zeros_like(time) for _ in range(6)]
     grf_r = np.array([])
-    input_array = np.zeros(20)
+    input_array = np.zeros(24)
 
     # Initialize gait cycle estimators
     gait_cycle_estimator_r = SimpleGaitCycleEstimator(delay=0)
@@ -92,10 +137,20 @@ def obj_con_function(params, iter, save_plots):
         grf_r = np.append(grf_r, model.bodies()[4].contact_force().array()[1])
 
         # Read current knee angles and center of mass height
+        hip_r[i] = model.dofs()[3].pos()
         knee_r[i] = model.dofs()[4].pos()
+        ankle_r[i] = model.dofs()[5].pos()
+        hip_l[i] = model.dofs()[6].pos()
         knee_l[i] = model.dofs()[7].pos()
+        ankle_l[i] = model.dofs()[8].pos()
+
+        hip_r_u[i] = model.dofs()[3].vel()
         knee_r_u[i] = model.dofs()[4].vel()
+        ankle_r_u[i] = model.dofs()[5].vel()
+        hip_l_u[i] = model.dofs()[6].vel()
         knee_l_u[i] = model.dofs()[7].vel()
+        ankle_l_u[i] = model.dofs()[8].vel()
+
         com_height[i] = model.com_pos().y
 
         # Compute current effort
@@ -112,20 +167,36 @@ def obj_con_function(params, iter, save_plots):
         estimator_r[i] = estimated_gait_cycle_r
         estimator_l[i] = estimated_gait_cycle_l
 
+        hip_ref_r[i] = linear_interp_hip_r(estimated_gait_cycle_r)
+        hip_ref_l[i] = linear_interp_hip_l(estimated_gait_cycle_l)
         knee_ref_r[i] = linear_interp_knee_r(estimated_gait_cycle_r)
         knee_ref_l[i] = linear_interp_knee_l(estimated_gait_cycle_l)
+        ankle_ref_r[i] = linear_interp_ankle_r(estimated_gait_cycle_r)
+        ankle_ref_l[i] = linear_interp_ankle_l(estimated_gait_cycle_l)
 
         if t > 2.5:
             # Set PID setpoints using interpolated reference trajectories
-            pid_r.setpoint = knee_ref_r[i]
-            pid_l.setpoint = knee_ref_l[i]
+            pid_hip_r.setpoint = hip_ref_r[i]
+            pid_hip_l.setpoint = hip_ref_l[i]
+            pid_knee_r.setpoint = knee_ref_r[i]
+            pid_knee_l.setpoint = knee_ref_l[i]
+            pid_ankle_r.setpoint = ankle_ref_r[i]
+            pid_ankle_l.setpoint = ankle_ref_l[i]
 
             # Compute control torques
-            input_array[-2] = pid_r.update(knee_r[i], 0.01)
-            input_array[-1] = pid_l.update(knee_l[i], 0.01)
+            input_array[-6] = pid_hip_r.update(hip_r[i], 0.01)
+            input_array[-5] = pid_hip_l.update(hip_l[i], 0.01)
+            input_array[-4] = pid_knee_r.update(knee_r[i], 0.01)
+            input_array[-3] = pid_knee_l.update(knee_l[i], 0.01)
+            input_array[-2] = pid_ankle_r.update(ankle_r[i], 0.01)
+            input_array[-1] = pid_ankle_l.update(ankle_l[i], 0.01)
 
-            input_r[i] = input_array[-2]
-            input_l[i] = input_array[-1]
+            input_hip_r[i] = input_array[-6]
+            input_hip_l[i] = input_array[-5]
+            input_knee_r[i] = input_array[-4]
+            input_knee_l[i] = input_array[-3]
+            input_ankle_r[i] = input_array[-2]
+            input_ankle_l[i] = input_array[-1]
 
         # Apply actuator inputs and advance simulation
         model.set_actuator_inputs(input_array)
@@ -164,8 +235,12 @@ def obj_con_function(params, iter, save_plots):
     constraint_value = -5 * np.tanh( 13 * ( max_distance_r - 0.3) )
 
     # Log results
-    print(f"\nEvaluating PID Parameters: {Kp:.4f}, {Ki:.4f}, {Kd:.4f}")
-    print(f"Evaluating Vertical Shifts: {v_shift_max_1:.4f}, {v_shift_min_1:.4f}, {v_shift_max_2:.4f}, {v_shift_min_2:.4f}")
+    print(f"\nEvaluating PID Parameters - Hip: {Kp_hip:.4f}, {Ki_hip:.4f}, {Kd_hip:.4f}")
+    print(f"\nEvaluating PID Parameters - Knee: {Kp_knee:.4f}, {Ki_knee:.4f}, {Kd_knee:.4f}")
+    print(f"\nEvaluating PID Parameters - Ankle: {Kp_ankle:.4f}, {Ki_ankle:.4f}, {Kd_ankle:.4f}")
+    print(f"Evaluating Vertical Shifts - Hip: {v_shift_hip_max_1:.4f}, {v_shift_hip_min_1:.4f}, {v_shift_hip_min_2:.4f}")
+    print(f"Evaluating Vertical Shifts - Knee: {v_shift_knee_max_1:.4f}, {v_shift_knee_min_1:.4f}, {v_shift_knee_max_2:.4f}, {v_shift_knee_min_2:.4f}")
+    print(f"Evaluating Vertical Shifts - Ankle: {v_shift_ankle_max_1:.4f}, {v_shift_ankle_min_1:.4f}, {v_shift_ankle_max_2:.4f}, {v_shift_ankle_min_2:.4f}")
     print(f"Mean Effort: {mean_current_effort:.4f}, Constraint_value: {constraint_value:.4f}")
     print(f"Stability Constraint: {'Unstable Gait' if is_unstable_r else 'Stable Gait'}")
     print(f"Max Distance (right): {max_distance_r:.4f}")
@@ -190,18 +265,18 @@ def obj_con_function(params, iter, save_plots):
         fig, axs = plt.subplots(2, 1, figsize=(12, 8))
 
         # Right knee
-        axs[0].plot(time_cycle, spline_ref_r, '--', linewidth=1, color='red')
+        axs[0].plot(time_cycle, spline_ref_knee_r, '--', linewidth=1, color='red')
         axs[0].plot(time_cycle, knee_r_ref_shift, color='blue', linewidth=1)
-        axs[0].scatter(time_cycle[cp_idx_r], spline_ref_r[cp_idx_r], color='black', zorder=5, s=30, edgecolor='black')
-        axs[0].scatter(time_cycle[cp_idx_r], knee_r_ref_shift[cp_idx_r], color='black', zorder=5, s=30, edgecolor='black')
+        axs[0].scatter(time_cycle[cp_knee_idx_r], spline_ref_knee_r[cp_knee_idx_r], color='black', zorder=5, s=30, edgecolor='black')
+        axs[0].scatter(time_cycle[cp_knee_idx_r], knee_r_ref_shift[cp_knee_idx_r], color='black', zorder=5, s=30, edgecolor='black')
         axs[0].set_ylabel('Knee Angle (Right) (rad)', fontsize=12)
         axs[0].grid(True)
 
         # Left knee
-        axs[1].plot(time_cycle, spline_ref_l, '--', linewidth=1, color='red')
+        axs[1].plot(time_cycle, spline_ref_knee_l, '--', linewidth=1, color='red')
         axs[1].plot(time_cycle, knee_l_ref_shift, color='blue', linewidth=1)
-        axs[1].scatter(time_cycle[cp_idx_l], spline_ref_l[cp_idx_l], color='black', zorder=5, s=30, edgecolor='black')
-        axs[1].scatter(time_cycle[cp_idx_l], knee_l_ref_shift[cp_idx_l], color='black', zorder=5, s=30, edgecolor='black')
+        axs[1].scatter(time_cycle[cp_knee_idx_l], spline_ref_knee_l[cp_knee_idx_l], color='black', zorder=5, s=30, edgecolor='black')
+        axs[1].scatter(time_cycle[cp_knee_idx_l], knee_l_ref_shift[cp_knee_idx_l], color='black', zorder=5, s=30, edgecolor='black')
         axs[1].set_xlabel('Time (s)', fontsize=12)
         axs[1].set_ylabel('Knee Angle (Left) (rad)', fontsize=12)
         axs[1].grid(True)
@@ -232,12 +307,12 @@ def obj_con_function(params, iter, save_plots):
         fig, axs = plt.subplots(2, 1, figsize=(12, 8))
 
         # Right knee input
-        axs[0].plot(time, input_r, linewidth=1, color='blue')
+        axs[0].plot(time, input_knee_r, linewidth=1, color='blue')
         axs[0].set_ylabel('Input (Right)', fontsize=12)
         axs[0].grid(True)
 
         # Left knee input
-        axs[1].plot(time, input_l, linewidth=1, color='blue')
+        axs[1].plot(time, input_knee_l, linewidth=1, color='blue')
         axs[1].set_xlabel('Time (s)', fontsize=12)
         axs[1].set_ylabel('Input (Left)', fontsize=12)
         axs[1].grid(True)

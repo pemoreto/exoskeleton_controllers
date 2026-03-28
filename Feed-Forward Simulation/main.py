@@ -44,9 +44,4 @@ duration = 20
 start_actuation = 2
 
 # Run the SCONE simulation
-run_simulation_ff(model, start_actuation,0, 0,True, duration, model_type)
-
-
-
-
-
+run_simulation_ff(model, start_actuation, [1, -1], [1, -1], [1, -1], True, duration, model_type)

@@ -8,7 +8,7 @@ import time
 # Extract simulation name from script filename
 simu_name = os.path.splitext(os.path.basename(__file__))[0]
 
-def run_simulation_ff(model, start_actuation, input_knee_r, input_knee_l, store_data, duration, version):
+def run_simulation_ff(model, start_actuation, input_hip, input_knee, input_ankle, store_data, duration, version):
     """
     Runs a gait simulation with predefined PID parameters.
     Records some kinetic and kinematic data over the simulation duration.
@@ -49,9 +49,9 @@ def run_simulation_ff(model, start_actuation, input_knee_r, input_knee_l, store_
         np.zeros_like(time_span) for _ in range(18))
 
     # Initialize storage arrays
-    input_r, input_l, effort = (np.zeros_like(time_span) for _ in range(3))
+    input_hip_r, input_knee_r, input_ankle_r, input_hip_l, input_knee_l, input_ankle_l, effort = (np.zeros_like(time_span) for _ in range(7))
     grf_r, grf_l = (np.array([]) for _ in range(2))
-    input_array = np.zeros(20)
+    input_array = np.zeros(len(model.actuators()))
 
     for i, t in enumerate(time_span):
         pelvis_tilt[i] = model.dofs()[0].pos()
@@ -98,15 +98,43 @@ def run_simulation_ff(model, start_actuation, input_knee_r, input_knee_l, store_
 
         effort[i] = measure.current_result(model)
 
-        if t == start_actuation:
-            # Update PID controllers with the current knee positions and time step (0.01 as example)
-            input_array[-2] = input_knee_r
-            input_array[-1] = input_knee_l
+        if version == 'hfd':
+            if t == start_actuation:
+                # Update PID controllers with the current knee positions and time step (0.01 as example)
+                input_array[-6] = input_hip[0]
+                input_array[-3] = input_hip[1]
+                input_array[-5] = input_knee[0]
+                input_array[-2] = input_knee[1]
+                input_array[-4] = input_ankle[0]
+                input_array[-1] = input_ankle[1]
 
-            # Store the control inputs
-            input_r[i] = input_array[-2]
-            input_l[i] = input_array[-1]
+                # Store the control inputs
+                input_hip_r[i] = input_array[-6]
+                input_hip_l[i] = input_array[-3]
+                input_knee_r[i] = input_array[-5]
+                input_knee_l[i] = input_array[-2]
+                input_ankle_r[i] = input_array[-4]
+                input_ankle_l[i] = input_array[-1]
+        elif version == 'osim':
+            if t == start_actuation:
+                # Update PID controllers with the current knee positions and time step (0.01 as example)
+                input_array[-6] = input_hip[0]
+                input_array[-3] = input_hip[1]
+                input_array[-5] = input_knee[0]
+                input_array[-2] = input_knee[1]
+                input_array[-4] = input_ankle[0]
+                input_array[-1] = input_ankle[1]
 
+                # Store the control inputs
+                input_hip_r[i] = input_array[-6]
+                input_hip_l[i] = input_array[-5]
+                input_knee_r[i] = input_array[-4]
+                input_knee_l[i] = input_array[-3]
+                input_ankle_r[i] = input_array[-2]
+                input_ankle_l[i] = input_array[-1]
+        else:
+            raise ValueError("model_type must be either 'hfd' or 'osim'.")
+        
         # Advance the simulation to the next time step
         model.set_actuator_inputs(input_array)
         model.advance_simulation_to(t)
@@ -188,12 +216,18 @@ def run_simulation_ff(model, start_actuation, input_knee_r, input_knee_l, store_
 
     # Knee Angles Plots
     fig, axs = plt.subplots(2, 1, figsize=(12, 8))
-    axs[0].plot(time_span, knee_r, linewidth=1, color='red')
-    axs[0].set_ylabel('Knee Angle (Right) (rad)', fontsize=12)
+    axs[0].plot(time_span, hip_flexion_r, linewidth=1, color='blue', label='Hip')
+    axs[0].plot(time_span, knee_r, linewidth=1, color='red', label='Knee')
+    axs[0].plot(time_span, ankle_r, linewidth=1, color='green', label='Ankle')
+    axs[0].legend(loc="upper right")
+    axs[0].set_ylabel('Angle (Right) (rad)', fontsize=12)
     axs[0].grid(True)
-    axs[1].plot(time_span, knee_l, linewidth=1, color='red')
+    axs[1].plot(time_span, hip_flexion_l, linewidth=1, color='blue', label='Hip')
+    axs[1].plot(time_span, knee_l, linewidth=1, color='red', label='Knee')
+    axs[1].plot(time_span, ankle_l, linewidth=1, color='green', label='Ankle')
+    axs[1].legend(loc="upper right")
     axs[1].set_xlabel('Time (s)', fontsize=12)
-    axs[1].set_ylabel('Knee Angle (Left) (rad)', fontsize=12)
+    axs[1].set_ylabel('Angle (Left) (rad)', fontsize=12)
     axs[1].grid(True)
     plt.tight_layout()
     plt.savefig(os.path.join(results_dir, f"Knee_Angle_Trajectory_{version}.svg"), dpi=300)
@@ -202,10 +236,17 @@ def run_simulation_ff(model, start_actuation, input_knee_r, input_knee_l, store_
 
     # Input Plots
     fig, axs = plt.subplots(2, 1, figsize=(12, 8))
-    axs[0].plot(time_span, input_r, linewidth=1, color='blue')
+    axs[0].plot(time_span, input_hip_r, linewidth=1, color='blue', label='Hip')
+    axs[0].plot(time_span, input_knee_r, linewidth=1, color='red', label='Knee')
+    axs[0].plot(time_span, input_ankle_r, linewidth=1, color='green', label='Ankle')
+    axs[0].legend(loc="upper right")
     axs[0].set_ylabel('Input (Right)', fontsize=12)
     axs[0].grid(True)
-    axs[1].plot(time_span, input_l, linewidth=1, color='blue')
+
+    axs[1].plot(time_span, input_hip_l, linewidth=1, color='blue', label='Hip')
+    axs[1].plot(time_span, input_knee_l, linewidth=1, color='red', label='Knee')
+    axs[1].plot(time_span, input_ankle_l, linewidth=1, color='green', label='Ankle')
+    axs[1].legend(loc="upper right")
     axs[1].set_xlabel('Time (s)', fontsize=12)
     axs[1].set_ylabel('Input (Left)', fontsize=12)
     axs[1].grid(True)
